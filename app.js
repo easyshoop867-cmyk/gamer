@@ -1,4 +1,4 @@
-// ===== UTILITY FUNCTIONS =====
+// ===== togglePw =====
 function togglePw(id, btn) {
     const input = document.getElementById(id);
     const icon = btn.querySelector('i');
@@ -6,6 +6,7 @@ function togglePw(id, btn) {
     else { input.type = 'password'; icon.className = 'fas fa-eye'; }
 }
 
+// ===== slideAnimate =====
     // ===== SLIDE ANIMATE — ต้องกำหนดก่อน app ทุกอย่าง =====
     function slideAnimate(selector) {
         const items = typeof selector === 'string'
@@ -33,8 +34,8 @@ function togglePw(id, btn) {
             });
         }, 800);
     }
-    </script>
-    <script>
+
+// ===== Main App =====
         /*
         =========================================
         🔥 คำแนะนำการตั้งค่า API & DATABASE 🔥
@@ -329,7 +330,6 @@ function togglePw(id, btn) {
                 this.popups = popupList.sort((a, b) => a.order - b.order);
                 this.currentIndex = 0;
                 if (this.popups.length > 0) {
-                    // บล็อก interaction กับหน้าเว็บจนกว่า popup จะปิดหมด
                     document.body.classList.add('popup-blocking');
                     this.show();
                 }
@@ -385,7 +385,6 @@ function togglePw(id, btn) {
                 if (this.currentIndex < this.popups.length) {
                     setTimeout(() => this.show(), 200);
                 } else {
-                    // popup ทั้งหมดปิดแล้ว → คืน interaction
                     document.body.classList.remove('popup-blocking');
                 }
             },
@@ -474,7 +473,7 @@ function togglePw(id, btn) {
             init: async function() {
                 this.loading(true);
 
-                // ===== PHASE 1: โหลดแค่ที่จำเป็น (parallel) =====
+                // PHASE 1: โหลดเฉพาะที่จำเป็น ยิงพร้อมกันทีเดียว
                 const [popRes, stRes, ctRes, pdRes, hotRes] = await Promise.all([
                     _supabase.from('popups').select('*').order('order', { ascending: true }),
                     _supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
@@ -501,7 +500,7 @@ function togglePw(id, btn) {
                     popupSystem.init(this.db.popups);
                 }
 
-                // ===== ปิด loading screen ทันที =====
+                // ปิด loading screen ทันที ไม่รอ
                 this.loading(false);
                 localStorage.removeItem('adminLogin');
                 requestAnimationFrame(() => {
@@ -514,7 +513,7 @@ function togglePw(id, btn) {
                     });
                 });
 
-                // ===== PHASE 2: โหลดส่วนที่เหลือใน background =====
+                // PHASE 2: โหลดส่วนที่เหลือ background ไม่บล็อก UI
                 Promise.all([
                     _supabase.from('users').select('*'),
                     _supabase.from('site_users').select('*').order('created_at', { ascending: false }),
@@ -3722,6 +3721,8 @@ function togglePw(id, btn) {
         function hideProcessing() {
             document.getElementById('processing-overlay').classList.remove('show');
         }
+
+// ===== Legacy Scroll =====
 // Legacy support for old scroll-animate items on initial load
 document.addEventListener("DOMContentLoaded", function() {
     const legacyItems = document.querySelectorAll('.scroll-animate');

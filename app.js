@@ -472,20 +472,38 @@ function togglePw(id, btn) {
             },
             
             init: async function() {
-
                 this.loading(true);
-                await this.fetchData();
+
+                // ===== PHASE 1: โหลดแค่ที่จำเป็น (parallel) =====
+                const [popRes, stRes, ctRes, pdRes, hotRes] = await Promise.all([
+                    _supabase.from('popups').select('*').order('order', { ascending: true }),
+                    _supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
+                    _supabase.from('categories').select('*'),
+                    _supabase.from('products').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('hot_deals').select('*'),
+                ]);
+
+                if(stRes.data && stRes.data.data) this.db.settings = stRes.data.data;
+                if(ctRes.data) this.db.categories = ctRes.data;
+                if(pdRes.data) this.db.products = pdRes.data;
+                if(popRes.data) this.db.popups = popRes.data;
+                if(hotRes.data) {
+                    this.db.hot_deals = {
+                        categories: hotRes.data.filter(d => d.type === 'category').map(d => d.item_id),
+                        products: hotRes.data.filter(d => d.type === 'product').map(d => d.item_id)
+                    };
+                }
+
                 await this.loadUserSession();
                 this.renderHome();
-                
+
                 if (this.db.popups && this.db.popups.length > 0) {
                     popupSystem.init(this.db.popups);
                 }
-                
-                await this.loadAnnouncement();
+
+                // ===== ปิด loading screen ทันที =====
                 this.loading(false);
                 localStorage.removeItem('adminLogin');
-                
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         const loadingScreen = document.getElementById('loading-screen');
@@ -495,6 +513,23 @@ function togglePw(id, btn) {
                         }
                     });
                 });
+
+                // ===== PHASE 2: โหลดส่วนที่เหลือใน background =====
+                Promise.all([
+                    _supabase.from('users').select('*'),
+                    _supabase.from('site_users').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('redeem_codes').select('*'),
+                    _supabase.from('topup_requests').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('orders').select('*').order('created_at', { ascending: false }),
+                ]).then(([usRes, suRes, codeRes, topupRes, orderRes]) => {
+                    if(usRes.data) this.db.users = usRes.data;
+                    if(suRes.data) this.db.site_users = suRes.data;
+                    if(codeRes.data) this.db.redeem_codes = codeRes.data;
+                    if(topupRes.data) this.db.topup_requests = topupRes.data;
+                    if(orderRes.data) this.db.orders = orderRes.data;
+                });
+
+                this.loadAnnouncement();
             },
 
             loading: (show) => document.getElementById('loader').style.display = show ? 'block' : 'none',

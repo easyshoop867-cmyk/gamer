@@ -330,7 +330,6 @@ function togglePw(id, btn) {
                 this.popups = popupList.sort((a, b) => a.order - b.order);
                 this.currentIndex = 0;
                 if (this.popups.length > 0) {
-                    document.body.classList.add('popup-blocking');
                     this.show();
                 }
             },
@@ -384,8 +383,6 @@ function togglePw(id, btn) {
                 this.currentIndex++;
                 if (this.currentIndex < this.popups.length) {
                     setTimeout(() => this.show(), 200);
-                } else {
-                    document.body.classList.remove('popup-blocking');
                 }
             },
 
@@ -534,32 +531,32 @@ function togglePw(id, btn) {
             loading: (show) => document.getElementById('loader').style.display = show ? 'block' : 'none',
 
             fetchData: async function() {
-                const { data: st } = await _supabase.from('settings').select('*').eq('id', 1).maybeSingle();
-                const { data: ct } = await _supabase.from('categories').select('*');
-                const { data: pd } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
-                const { data: us } = await _supabase.from('users').select('*');
-                const { data: siteUsers } = await _supabase.from('site_users').select('*').order('created_at', { ascending: false });
-                const { data: pop } = await _supabase.from('popups').select('*').order('order', { ascending: true });
-                const { data: codes } = await _supabase.from('redeem_codes').select('*');
-                const { data: topups } = await _supabase.from('topup_requests').select('*').order('created_at', { ascending: false });
-                const { data: orders } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
-                
-                if(st && st.data) this.db.settings = st.data;
-                if(ct) this.db.categories = ct;
-                if(pd) this.db.products = pd;
-                if(us) this.db.users = us;
-                if(siteUsers) this.db.site_users = siteUsers;
-                if(pop) this.db.popups = pop;
-                if(codes) this.db.redeem_codes = codes;
-                if(topups) this.db.topup_requests = topups;
-                if(orders) this.db.orders = orders;
-                
-                // โหลด hot deals จาก Supabase
-                const { data: hotDeals } = await _supabase.from('hot_deals').select('*');
-                if(hotDeals) {
+                // โหลดทุกอย่างพร้อมกัน (parallel) แทน sequential
+                const [stR, ctR, pdR, usR, suR, popR, codeR, topupR, orderR, hotR] = await Promise.all([
+                    _supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
+                    _supabase.from('categories').select('*'),
+                    _supabase.from('products').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('users').select('*'),
+                    _supabase.from('site_users').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('popups').select('*').order('order', { ascending: true }),
+                    _supabase.from('redeem_codes').select('*'),
+                    _supabase.from('topup_requests').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('orders').select('*').order('created_at', { ascending: false }),
+                    _supabase.from('hot_deals').select('*'),
+                ]);
+                if(stR.data && stR.data.data) this.db.settings = stR.data.data;
+                if(ctR.data) this.db.categories = ctR.data;
+                if(pdR.data) this.db.products = pdR.data;
+                if(usR.data) this.db.users = usR.data;
+                if(suR.data) this.db.site_users = suR.data;
+                if(popR.data) this.db.popups = popR.data;
+                if(codeR.data) this.db.redeem_codes = codeR.data;
+                if(topupR.data) this.db.topup_requests = topupR.data;
+                if(orderR.data) this.db.orders = orderR.data;
+                if(hotR.data) {
                     this.db.hot_deals = {
-                        categories: hotDeals.filter(d => d.type === 'category').map(d => d.item_id),
-                        products: hotDeals.filter(d => d.type === 'product').map(d => d.item_id)
+                        categories: hotR.data.filter(d => d.type === 'category').map(d => d.item_id),
+                        products: hotR.data.filter(d => d.type === 'product').map(d => d.item_id)
                     };
                 }
             },
@@ -3114,30 +3111,42 @@ function togglePw(id, btn) {
                 const prize = this.pickPrize();
                 if(!prize) { NotificationManager.error('ຜິດພາດ: ໄດ້ລາງວັນບໍ່ສຳເລັດ'); return; }
 
-                // หมุน animation
+                // หมุน animation — คำนวณ angle ให้วงล้อหยุดตรงช่องที่สุ่มได้จริงๆ
                 this.isSpinning = true;
                 document.getElementById('spin-btn').disabled = true;
                 document.getElementById('spin-result-box').style.display = 'none';
 
                 const n = this.prizes.length;
                 const prizeIdx = this.prizes.indexOf(prize);
-                const arc = (Math.PI*2)/n;
-                const targetAngle = -(arc * prizeIdx + arc/2) + Math.PI/2;
-                const spins = 5 + Math.random()*3;
-                const finalAngle = spins*Math.PI*2 + targetAngle - (this.currentAngle % (Math.PI*2));
+                const arc = (Math.PI * 2) / n;
+
+                // draw() วาดช่อง i ที่ start = arc*i - PI/2 (ctx ถูก rotate ด้วย currentAngle แล้ว)
+                // pointer อยู่บนสุด = angle 0 ของ canvas = -PI/2 ของวงล้อ
+                // เราต้องการให้กึ่งกลางช่อง prizeIdx อยู่ที่ angle -PI/2 (บนสุด)
+                // กึ่งกลางช่อง prizeIdx ใน local coords = arc*prizeIdx - PI/2 + arc/2
+                // ต้องการให้: currentAngle + (arc*prizeIdx - PI/2 + arc/2) = -PI/2
+                // => currentAngle = -arc*prizeIdx - arc/2
+                const targetLocalAngle = -(arc * prizeIdx + arc / 2);
+                // ปรับให้ currentAngle วิ่งไปข้างหน้าเสมอ (หมุนทวนเข็ม = angle เพิ่มขึ้น)
+                const spins = 6 + Math.floor(Math.random() * 4);
+                let diff = targetLocalAngle - (this.currentAngle % (Math.PI * 2));
+                if(diff > 0) diff -= Math.PI * 2;
+                const finalAngle = this.currentAngle + (Math.PI * 2 * spins) + diff;
+
                 const duration = 4500;
                 const start = performance.now();
                 const startAngle = this.currentAngle;
 
                 const animate = (now) => {
                     const elapsed = now - start;
-                    const t = Math.min(elapsed/duration, 1);
-                    const ease = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
-                    this.currentAngle = startAngle + finalAngle * ease;
+                    const t = Math.min(elapsed / duration, 1);
+                    const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+                    this.currentAngle = startAngle + (finalAngle - startAngle) * ease;
                     this.draw();
-                    if(t < 1) { requestAnimationFrame(animate); }
-                    else {
-                        this.currentAngle = startAngle + finalAngle;
+                    if(t < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.currentAngle = finalAngle;
                         this.draw();
                         this.onSpinEnd(prize, newTickets);
                     }
@@ -3147,21 +3156,19 @@ function togglePw(id, btn) {
 
             pickPrize: function() {
                 const available = this.prizes.filter(p => p.stock === 0 || (p.stock_used||0) < p.stock);
-                if(!available.length) return this.prizes[Math.floor(Math.random()*this.prizes.length)];
-                const total = available.reduce((s,p) => s + (parseFloat(p.pct)||0), 0);
+                if(!available.length) return this.prizes[Math.floor(Math.random() * this.prizes.length)];
+                const total = available.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+                if(total <= 0) return available[Math.floor(Math.random() * available.length)];
                 let r = Math.random() * total;
                 for(const p of available) {
-                    r -= parseFloat(p.pct)||0;
+                    r -= parseFloat(p.pct) || 0;
                     if(r <= 0) return p;
                 }
-                return available[available.length-1];
+                return available[available.length - 1];
             },
 
             onSpinEnd: async function(prize, newTickets) {
-                // แสดง popup สวยๆ
-                spinWheel.showWinPopup(prize, '');
-
-                // ส่งรางวัล
+                // ส่งรางวัล (ทำก่อน แล้วค่อยแสดง popup)
                 let resultDesc = '';
                 if(prize.type === 'cash') {
                     const newBal = (currentUser.balance||0) + (prize.amount||0);
@@ -3172,30 +3179,40 @@ function togglePw(id, btn) {
                 } else if(prize.type === 'product' && prize.product_id) {
                     const prod = app.db.products.find(p => p.id === prize.product_id);
                     if(prod) {
-                        await _supabase.from('orders').insert([{
+                        const { error: orderErr } = await _supabase.from('orders').insert([{
                             user_id: currentUser.id,
                             product_id: prod.id,
                             product_name: prod.name,
+                            product_img: prod.img || '',
+                            product_price: 0,
+                            quantity: 1,
                             total_amount: 0,
-                            status: 'spin_win',
+                            status: 'completed',
                             note: 'ໄດ້ຈາກວົງລໍ້'
                         }]);
-                        resultDesc = `ໄດ້ຮັບ "${prod.name}" ກວດສອບໃນປະຫວັດ!`;
+                        if(orderErr) {
+                            console.error('spin order error:', orderErr);
+                            resultDesc = `ໄດ້ຮັບ "${prod.name}" (ກະລຸນາຕິດຕໍ່ Admin ຖ້າບໍ່ໂຊ)`;
+                        } else {
+                            resultDesc = `ໄດ້ຮັບ "${prod.name}" ກວດສອບໃນປະຫວັດ!`;
+                        }
+                    } else {
+                        resultDesc = `ໄດ້ຮັບ "${prize.display_name}" ກະລຸນາຕິດຕໍ່ Admin`;
                     }
                 } else if(prize.type === 'custom') {
                     resultDesc = `ກະລຸນາຕິດຕໍ່ Admin ເພື່ອຮັບ "${prize.display_name}"`;
                 } else if(prize.type === 'miss') {
                     resultDesc = 'ໂຊກດີຄັ້ງໜ້າ!';
                 }
-                document.getElementById('spin-result-desc').textContent = resultDesc;
 
                 // อัปเดต stock_used
                 if(prize.stock > 0) {
                     await _supabase.from('spin_prizes').update({ stock_used: (prize.stock_used||0)+1 }).eq('id', prize.id);
+                    prize.stock_used = (prize.stock_used||0)+1;
                 }
 
-                // บันทึกประวัติ
-                await _supabase.from('spin_history').insert([{
+                // บันทึกประวัติ spin
+                const { error: histErr } = await _supabase.from('spin_history').insert([{
                     user_id: currentUser.id,
                     username: currentUser.username,
                     prize_id: prize.id,
@@ -3203,13 +3220,18 @@ function togglePw(id, btn) {
                     prize_type: prize.type,
                     prize_amount: prize.amount || 0
                 }]);
+                if(histErr) console.error('spin history error:', histErr);
+
+                // แสดง popup หลังจากรู้ผลทุกอย่างแล้ว
+                spinWheel.showWinPopup(prize, resultDesc);
+                document.getElementById('spin-result-desc').textContent = resultDesc;
+                document.getElementById('spin-win-desc').textContent = resultDesc;
 
                 // อัปเดต UI
                 this.isSpinning = false;
                 document.getElementById('spin-btn').disabled = false;
                 document.getElementById('spin-tickets-count').textContent = newTickets;
                 spinWheel._pendingResultDesc = resultDesc;
-                document.getElementById('spin-win-desc').textContent = resultDesc;
                 app.loadSpinHistory();
             },
 

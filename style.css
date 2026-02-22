@@ -1,3 +1,4 @@
+/* ===== Main Styles ===== */
         :root {
             --main-red: #ff0000;
             --dark-red: #8b0000;
@@ -257,7 +258,7 @@
             align-items: stretch;
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-            animation: fadeInUp 0.2s ease forwards;
+            animation: fadeInUp 0.4s ease forwards;
             position: relative;
         }
 
@@ -586,7 +587,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            animation: slideIn 0.2s ease;
+            animation: slideIn 0.5s ease;
         }
 
         /* === หมวดหมู่สินค้า === */
@@ -604,7 +605,7 @@
             display: flex;
             flex-direction: column;
             cursor: pointer;
-            animation: fadeInUp 0.25s ease forwards;
+            animation: fadeInUp 0.5s ease forwards;
             opacity: 0;
             background: linear-gradient(145deg, #111, #0b0b0b);
             border-radius: 16px;
@@ -620,12 +621,12 @@
             box-shadow: 0 10px 30px rgba(255,255,255,0.08);
         }
 
-        .cat-item:nth-child(1) { animation-delay: 0.02s; }
-        .cat-item:nth-child(2) { animation-delay: 0.03s; }
-        .cat-item:nth-child(3) { animation-delay: 0.05s; }
-        .cat-item:nth-child(4) { animation-delay: 0.06s; }
-        .cat-item:nth-child(5) { animation-delay: 0.07s; }
-        .cat-item:nth-child(6) { animation-delay: 0.09s; }
+        .cat-item:nth-child(1) { animation-delay: 0.05s; }
+        .cat-item:nth-child(2) { animation-delay: 0.1s; }
+        .cat-item:nth-child(3) { animation-delay: 0.15s; }
+        .cat-item:nth-child(4) { animation-delay: 0.2s; }
+        .cat-item:nth-child(5) { animation-delay: 0.25s; }
+        .cat-item:nth-child(6) { animation-delay: 0.3s; }
 
         .cat-img-box {
             width: 100%;
@@ -780,16 +781,16 @@
             flex-direction: column; 
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            animation: fadeInUp 0.3s ease forwards;
+            animation: fadeInUp 0.6s ease forwards;
             opacity: 0;
         }
         
-        .prod-card:nth-child(1) { animation-delay: 0.03s; }
-        .prod-card:nth-child(2) { animation-delay: 0.06s; }
-        .prod-card:nth-child(3) { animation-delay: 0.09s; }
-        .prod-card:nth-child(4) { animation-delay: 0.12s; }
-        .prod-card:nth-child(5) { animation-delay: 0.05s; }
-        .prod-card:nth-child(6) { animation-delay: 0.18s; }
+        .prod-card:nth-child(1) { animation-delay: 0.1s; }
+        .prod-card:nth-child(2) { animation-delay: 0.2s; }
+        .prod-card:nth-child(3) { animation-delay: 0.3s; }
+        .prod-card:nth-child(4) { animation-delay: 0.4s; }
+        .prod-card:nth-child(5) { animation-delay: 0.5s; }
+        .prod-card:nth-child(6) { animation-delay: 0.6s; }
         
         .prod-card:hover {
             transform: translateY(-3px);
@@ -1834,8 +1835,8 @@
 .slide-up {
     opacity: 0;
     transform: translateY(90px) scale(0.88) rotateX(8deg);
-    transition: opacity 0.35s ease,
-                transform 0.35s ease;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
     transform-origin: bottom center;
 }
@@ -1848,7 +1849,7 @@
 .scroll-animate {
     opacity: 0 !important;
     transform: translateY(40px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: all 0.6s ease;
 }
 .scroll-animate.show {
     opacity: 1 !important;
@@ -1978,36 +1979,7 @@
 }
 
 
-/* ===== PERFORMANCE OPTIMIZATIONS ===== */
-/* ลด reflow โดยใช้ transform/opacity แทน */
-.prod-card, .cat-item, .ann-card {
-    contain: layout style;
-}
-
-/* GPU acceleration สำหรับ animated elements */
-.notification, .modal-content, .popup-container, 
-.processing-box, #loading-screen {
-    will-change: transform, opacity;
-}
-
-/* ปิด animation สำหรับคนที่ prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Loading screen - block interaction จนกว่า popup จะเสร็จ */
-body.popup-blocking {
-    pointer-events: none;
-}
-body.popup-blocking #popup-system {
-    pointer-events: all;
-}
-
-/* ===== Admin Overview Dashboard Styles ===== */
+/* ===== Admin Overview Dashboard ===== */
                 .ov-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
                 @media(min-width:600px){ .ov-grid { grid-template-columns: repeat(4, 1fr); } }
                 .ov-card {
@@ -2058,3 +2030,9 @@ body.popup-blocking #popup-system {
                 }
                 .ov-refresh-btn:hover { background:rgba(124,58,237,0.3); }
                 .ov-loading { text-align:center; padding:40px; color:#555; font-size:14px; }
+
+/* ===== Performance & Popup Blocking ===== */
+.prod-card, .cat-item { contain: layout style; }
+.notification, .modal-content, .popup-container { will-change: transform, opacity; }
+body.popup-blocking { pointer-events: none; }
+body.popup-blocking #popup-system { pointer-events: all; }

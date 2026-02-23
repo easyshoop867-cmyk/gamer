@@ -44,21 +44,21 @@
         /* === Loading Screen - ตัวการ์ตูนเอลฟ์ === */
         #loading-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: #0a0a0a;
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 99999;
+            opacity: 1;
+            visibility: visible;
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
-        
         #loading-screen.hide {
             opacity: 0;
             visibility: hidden;
+            pointer-events: none;
         }
         
         .loading-character {
@@ -369,8 +369,7 @@
         .announcement-banner { display: none !important; }
 
         header { 
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(6px);
+            background: #0a0a0a;
             padding: 10px 0; 
             position: sticky; 
             top: 0; 
@@ -559,6 +558,46 @@
             background: linear-gradient(135deg, #ffaa00, #cc8800); 
         }
 
+        /* === Hero Slideshow === */
+        .hero-slideshow {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            margin-top: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background-color: #111;
+            transition: border-color 0.3s ease;
+        }
+        .hero-slideshow:hover { border-color: var(--main-red); box-shadow: var(--shadow-red); }
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.7s ease;
+        }
+        .hero-slide.active { opacity: 1; }
+        .hero-dots {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 2;
+        }
+        .hero-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .hero-dot.active { background: #fff; transform: scale(1.3); }
+        /* legacy fallback */
         .hero-banner { 
             width: 100%; 
             height: 160px; 
@@ -570,7 +609,6 @@
             background-color: #111;
             transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
-        
         .hero-banner:hover {
             border-color: var(--main-red);
             box-shadow: var(--shadow-red);
@@ -991,7 +1029,7 @@
             left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0,0,0,0.95); 
+            background: rgba(0,0,0,0.92); 
             z-index: 2000; 
             display: none; 
             align-items: center; 
@@ -1006,8 +1044,7 @@
         }
         
         .modal-content { 
-            background: rgba(15,15,15,0.95);
-            backdrop-filter: blur(6px);
+            background: #131313;
             width: 100%; 
             max-width: 400px; 
             padding: 30px; 
@@ -1180,14 +1217,13 @@
             position: absolute;
             top: 70px;
             right: 20px;
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 0, 0, 0.2);
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 0, 0, 0.3);
             border-radius: 16px;
             padding: 15px;
             min-width: 280px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-            z-index: 1000;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.9);
+            z-index: 1001;
             animation: fadeInUp 0.3s ease;
         }
         .user-menu-item {
@@ -1623,28 +1659,33 @@
         /* Mobile Navigation */
         .mobile-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(6px);
-            border-top: 2px solid var(--main-red);
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(0);
+            -webkit-transform: translateX(-50%) translateZ(0);
+            width: calc(100% - 32px);
+            max-width: 480px;
+            background: rgba(18,18,18,0.97);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px;
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            align-items: center;
+            padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
             z-index: 999;
-            animation: slideIn 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,0,0,0.08);
         }
         
         .mobile-nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 12px;
-            transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+            padding: 7px 12px;
+            border-radius: 20px;
+            transition: background 0.2s ease, transform 0.15s ease;
+            flex: 1;
         }
         
         .mobile-nav-item:hover {
@@ -1661,6 +1702,9 @@
             color: var(--text-dim);
         }
         
+        .mobile-nav-item.active {
+            background: rgba(255,0,0,0.12);
+        }
         .mobile-nav-item.active i,
         .mobile-nav-item.active span {
             color: var(--main-red);
@@ -1742,8 +1786,8 @@
     
 /* === SCROLL SLIDE EFFECT (SAFE ADDITION) === */
         /* ===== SPIN WHEEL NAV BUTTON ===== */
-        .nav-spin-center { position: relative; margin-top: -14px; }
-        .spin-nav-btn { will-change: opacity; width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#ff0000,#8b0000); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; box-shadow:0 0 15px rgba(255,0,0,0.5); margin:0 auto 2px; border:3px solid #1a1a1a; animation:spinGlow 2s ease-in-out infinite; }
+        
+        
         @keyframes spinGlow { 0%,100%{opacity:0.85;} 50%{opacity:1;} }
         .nav-spin-center span { font-size:10px; color:var(--text-dim); }
         .mobile-nav-item span { font-size:10px; }
@@ -1831,15 +1875,14 @@
 
 .slide-up {
     opacity: 0;
-    transform: translateY(90px) scale(0.88) rotateX(8deg);
-    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(50px) scale(0.88);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
-    transform-origin: bottom center;
 }
 .slide-up.visible {
     opacity: 1;
-    transform: translateY(0) scale(1) rotateX(0deg);
+    transform: translateY(0) scale(1);
 }
 
 /* Legacy compat */
@@ -2031,3 +2074,244 @@
 /* ===== Performance ===== */
 .prod-card, .cat-item { contain: layout style; }
 .notification, .modal-content, .popup-container { will-change: transform, opacity; }
+
+        /* Spin center button — ลอยขึ้นจาก nav pill */
+        .nav-spin-center {
+            position: relative;
+            flex: 1.2;
+        }
+        .spin-nav-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff0000, #8b0000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(255,0,0,0.5);
+            margin-top: -20px;
+            border: 3px solid #121212;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .spin-nav-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 2px 8px rgba(255,0,0,0.4);
+        }
+        .spin-nav-btn i {
+            font-size: 20px;
+            color: white;
+        }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 40px 20px 120px;
+            margin-top: 40px;
+        }
+        .footer-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .footer-logo-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .footer-brand-name {
+            font-size: 20px;
+            font-weight: 800;
+        }
+        .footer-brand-name .ez { color: var(--main-red); }
+        .footer-desc {
+            font-size: 13px;
+            color: #777;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+        .footer-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 24px 0;
+        }
+        .footer-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .footer-social-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        }
+        .footer-social-link:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateX(4px);
+        }
+        .footer-social-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .footer-social-icon.fb { background: #1877f2; }
+        .footer-social-icon.wa { background: #25d366; }
+        .footer-social-icon.tt { background: #000; border: 1px solid #333; }
+        .footer-social-text { font-size: 14px; font-weight: 600; }
+        .footer-social-sub { font-size: 11px; color: #666; margin-top: 1px; }
+        .footer-copy {
+            text-align: center;
+            font-size: 11px;
+            color: #444;
+            margin-top: 28px;
+        }
+
+        /* ===== FACEBOOK PAGE WIDGET ===== */
+        .fb-page-widget {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        .fb-page-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #fff;
+        }
+        .fb-widget-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid #eee;
+            background: #f0f0f0;
+            display: block;
+        }
+        .fb-widget-info { flex: 1; }
+        .fb-widget-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1c1e21;
+            line-height: 1.2;
+        }
+        .fb-widget-sub {
+            font-size: 12px;
+            color: #65676b;
+            margin-top: 2px;
+        }
+        .fb-widget-divider {
+            height: 1px;
+            background: #e4e6ea;
+            margin: 0 16px;
+        }
+        .fb-widget-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #fff;
+        }
+        .fb-widget-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: filter 0.15s;
+        }
+        .fb-widget-btn:hover { filter: brightness(0.93); }
+        .fb-follow {
+            background: #1877f2;
+            color: #fff;
+        }
+        .fb-share {
+            background: #e4e6eb;
+            color: #050505;
+        }
+
+        /* Modal content slide up animation */
+        .modal-overlay.active .modal-content {
+            animation: modalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px) scale(0.96); opacity: 0; }
+            to   { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+/* ============================================
+   ANIMATIONS ADDED — ต่อท้าย ไม่แตะของเดิม
+   ============================================ */
+
+/* --- keyframes ที่ขาดไป --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes popupZoom {
+    from { transform: scale(0.82) translateY(40px); opacity: 0; }
+    to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+/* --- Page transition overlay --- */
+#page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 99990;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+#page-transition-overlay.dim  { opacity: 1;  pointer-events: all; }
+
+/* --- Popup overlay backdrop สวยขึ้น --- */
+.popup-overlay {
+    backdrop-filter: blur(3px) !important;
+}
+/* popup-container ใช้ popupZoom แทนของเดิมที่ขาด keyframe */
+.popup-container {
+    animation: popupZoom 0.38s cubic-bezier(0.16,1,0.3,1) forwards !important;
+}
+
+/* --- slide-from-left สำหรับ prod-card --- */
+.slide-from-left {
+    opacity: 0;
+    transform: translateX(-55px);
+    transition: opacity 0.52s cubic-bezier(0.16,1,0.3,1),
+                transform 0.52s cubic-bezier(0.16,1,0.3,1);
+    will-change: opacity, transform;
+}
+.slide-from-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+/* prod-card ที่มี slide-from-left ต้อง reset animation เดิม */
+.prod-card.slide-from-left { animation: none !important; }
